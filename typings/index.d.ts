@@ -396,6 +396,8 @@ declare module 'discord.js-commando' {
 		guarded?: boolean;
 		hidden?: boolean;
 		unknown?: boolean;
+		premium?: boolean;
+		securityLevel?: number;
 	}
 
 	interface CommandoClientEvents extends ClientEvents {
