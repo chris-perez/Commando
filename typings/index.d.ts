@@ -166,7 +166,7 @@ declare module 'discord.js-commando' {
 		public anyUsage(argString?: string, prefix?: string, user?: User): string;
 		public code: CommandoMessage['say'];
 		public direct: CommandoMessage['say'];
-		public embed(embed: MessageEmbed, content?: string, options?: MessageOptions | MessageAdditions);
+		public embed(embed: MessageEmbed, content?: string, options?: MessageOptions | MessageAdditions): Promise<MessageEmbed | MessageEmbed[]>;
 		public initCommand(command?: Command, argString?: string[], patternMatches?: string[]): this;
 		public parseArgs(): string | string[];
 		public static parseArgs(argString: string, argCount?: number, allowSingleQuote?: boolean): string[];
