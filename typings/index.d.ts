@@ -1,7 +1,7 @@
 declare module 'discord.js-commando' {
 	import { Client, ClientEvents, ClientOptions, Collection, Guild, GuildResolvable, Message, MessageAttachment, MessageEditOptions, MessageEmbed, MessageOptions, MessageAdditions, MessageReaction, PermissionResolvable, PermissionString, StringResolvable, User, UserResolvable } from 'discord.js';
 
-	export class Argument {
+	export class Argument<T extends ArgumentType = ArgumentType> {
 		private constructor(client: CommandoClient, info: ArgumentInfo);
 
 		private obtainInfinite(msg: CommandoMessage, vals?: string[], promptLimit?: number): Promise<ArgumentResult>;
@@ -19,7 +19,7 @@ declare module 'discord.js-commando' {
 		public oneOf: string[];
 		public parser: Function;
 		public prompt: string;
-		public type: ArgumentType;
+		public type: T;
 		public validator: Function;
 		public wait: number;
 
@@ -91,6 +91,8 @@ declare module 'discord.js-commando' {
 		public patterns: RegExp[];
 		public throttling: ThrottlingOptions;
 		public unknown: boolean;
+		public premium: boolean;
+		public securityLevel: number;
 		public userPermissions: PermissionResolvable[];
 
 		public hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean | string;
@@ -104,7 +106,9 @@ declare module 'discord.js-commando' {
 		public onError(err: Error, message: CommandoMessage, args: object | string | string[], fromPattern: false, result?: ArgumentCollectorResult): Promise<Message | Message[]>;
 		public onError(err: Error, message: CommandoMessage, args: string[], fromPattern: true, result?: ArgumentCollectorResult): Promise<Message | Message[]>;
 		public reload(): void;
-		public abstract run(message: CommandoMessage, args: object | string | string[], fromPattern: boolean, result?: ArgumentCollectorResult): Promise<Message | Message[] | null> | null;
+
+    public abstract run(message: CommandoMessage, args: object | string | string[], fromPattern: boolean, result?: ArgumentCollectorResult): Promise<Message | Message[] | null> | null;
+
 		public setEnabledIn(guild: GuildResolvable, enabled: boolean): void;
 		public unload(): void;
 		public usage(argString?: string, prefix?: string, user?: User): string;
@@ -171,8 +175,10 @@ declare module 'discord.js-commando' {
 		public anyUsage(argString?: string, prefix?: string, user?: User): string;
 		public code: CommandoMessage['say'];
 		public direct: CommandoMessage['say'];
+
 		public embed(embed: MessageEmbed, content?: StringResolvable, options?: (MessageOptions & { split?: false }) | MessageAdditions): Promise<CommandoMessage>;
 		public embed(embed: MessageEmbed, content?: StringResolvable, options?: (MessageOptions & { split: true | Exclude<MessageOptions['split'], boolean> }) | MessageAdditions): Promise<CommandoMessage[]>;
+
 		public initCommand(command?: Command, argString?: string[], patternMatches?: string[]): this;
 		public parseArgs(): string | string[];
 		public replyEmbed: CommandoMessage['embed'];
@@ -406,6 +412,8 @@ declare module 'discord.js-commando' {
 		guarded?: boolean;
 		hidden?: boolean;
 		unknown?: boolean;
+		premium?: boolean;
+		securityLevel?: number;
 	}
 
 	interface CommandoClientEvents extends ClientEvents {
@@ -470,9 +478,9 @@ declare module 'discord.js-commando' {
 		group?: boolean;
 	}
 
-	type Inhibitor = (msg: CommandoMessage) => false | string | Inhibition;
+	type Inhibitor = (msg: CommandoMessage) => false | string | Inhibition | Promise<false | string | Inhibition>;
 
-	export interface Inhibition {
+  export interface Inhibition {
 		reason: string;
 		response?: Promise<Message>;
 	}

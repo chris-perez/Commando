@@ -124,7 +124,7 @@ class CommandDispatcher {
 		// Run the command, or reply with an error
 		let responses;
 		if(cmdMsg) {
-			const inhibited = this.inhibit(cmdMsg);
+			const inhibited = await this.inhibit(cmdMsg);
 
 			if(!inhibited) {
 				if(cmdMsg.command) {
@@ -192,9 +192,9 @@ class CommandDispatcher {
 	 * @return {?Inhibition}
 	 * @private
 	 */
-	inhibit(cmdMsg) {
+	async inhibit(cmdMsg) {
 		for(const inhibitor of this.inhibitors) {
-			let inhibit = inhibitor(cmdMsg);
+			let inhibit = await inhibitor(cmdMsg);
 			if(inhibit) {
 				if(typeof inhibit !== 'object') inhibit = { reason: inhibit, response: undefined };
 
@@ -256,8 +256,20 @@ class CommandDispatcher {
 		// Find the command to run with default command handling
 		const prefix = message.guild ? message.guild.commandPrefix : this.client.commandPrefix;
 		if(!this._commandPatterns[prefix]) this.buildCommandPattern(prefix);
+		// Look for 2-word commands
 		let cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 2);
-		if(!cmdMsg && !message.guild) cmdMsg = this.matchDefault(message, /^([^\s]+)/i, 1, true);
+		if(cmdMsg && !cmdMsg.command) {
+			// Look for 1-word commands
+			cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 3);
+		}
+		if(!cmdMsg && !message.guild) {
+			// Look for 2-word commands
+			cmdMsg = this.matchDefault(message, /^((\S+)(?:\s+\S+)?)/i, 1, true);
+			if(cmdMsg && !cmdMsg.command) {
+				// Look for 1-word commands
+				cmdMsg = this.matchDefault(message, /^((\S+)(?:\s+\S+)?)/i, 2, true);
+			}
+		}
 		return cmdMsg;
 	}
 
@@ -274,10 +286,11 @@ class CommandDispatcher {
 		const matches = pattern.exec(message.content);
 		if(!matches) return null;
 		const commands = this.registry.findCommands(matches[commandNameIndex], true);
-		if(commands.length !== 1 || !commands[0].defaultHandling) {
-			return message.initCommand(this.registry.unknownCommand, prefixless ? message.content : matches[1]);
+		const argString = message.content.substring(matches[commandNameIndex].length +
+				(!prefixless ? matches[1].length : 0));
+		if(commandNameIndex === 3 && (commands.length !== 1 || !commands[0].defaultHandling)) {
+			return message.initCommand(this.registry.unknownCommand, matches[commandNameIndex] + argString);
 		}
-		const argString = message.content.substring(matches[1].length + (matches[2] ? matches[2].length : 0));
 		return message.initCommand(commands[0], argString);
 	}
 
@@ -292,10 +305,10 @@ class CommandDispatcher {
 		if(prefix) {
 			const escapedPrefix = escapeRegex(prefix);
 			pattern = new RegExp(
-				`^(<@!?${this.client.user.id}>\\s+(?:${escapedPrefix}\\s*)?|${escapedPrefix}\\s*)([^\\s]+)`, 'i'
+				`^(<@!?${this.client.user.id}>\\s+(?:${escapedPrefix}\\s*)?|${escapedPrefix}\\s*)((\\S+)(?:\\s+\\S+)?)`, 'i'
 			);
 		} else {
-			pattern = new RegExp(`(^<@!?${this.client.user.id}>\\s+)([^\\s]+)`, 'i');
+			pattern = new RegExp(`(^<@!?${this.client.user.id}>\\s+)((\\S+)(?:\\s+\\S+)?)`, 'i');
 		}
 		this._commandPatterns[prefix] = pattern;
 		this.client.emit('debug', `Built command pattern for prefix "${prefix}": ${pattern}`);
