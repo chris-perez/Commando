@@ -256,12 +256,17 @@ class CommandDispatcher {
 		// Find the command to run with default command handling
 		const prefix = message.guild ? message.guild.commandPrefix : this.client.commandPrefix;
 		if(!this._commandPatterns[prefix]) this.buildCommandPattern(prefix);
-		// Look for 2-word commands
+		// Look for 3-word commands
 		let cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 2);
 		if(cmdMsg && !cmdMsg.command) {
-			// Look for 1-word commands
+			// Look for 2-word commands
 			cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 3);
 		}
+		if(cmdMsg && !cmdMsg.command) {
+			// Look for 1-word commands
+			cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 4);
+		}
+
 		if(!cmdMsg && !message.guild) {
 			// Look for 2-word commands
 			cmdMsg = this.matchDefault(message, /^((\S+)(?:\s+\S+)?)/i, 1, true);
@@ -304,11 +309,16 @@ class CommandDispatcher {
 		let pattern;
 		if(prefix) {
 			const escapedPrefix = escapeRegex(prefix);
+			//pattern = new RegExp(
+			//	`^(<@!?${this.client.user.id}>\\s+(?:${escapedPrefix}\\s*)?|${escapedPrefix}\\s*)((\\S+)(?:\\s+\\S+)?)`, 'i'
+			//);
 			pattern = new RegExp(
-				`^(<@!?${this.client.user.id}>\\s+(?:${escapedPrefix}\\s*)?|${escapedPrefix}\\s*)((\\S+)(?:\\s+\\S+)?)`, 'i'
+				`^(<@!?${this.client.user.id}>\\s+(?:${escapedPrefix}\\s*)?|${escapedPrefix}\\s*)(((\\S+)(?:\\s+\\S+))(?:\\s+\\S+)?)`, 'i'
 			);
+
 		} else {
-			pattern = new RegExp(`(^<@!?${this.client.user.id}>\\s+)((\\S+)(?:\\s+\\S+)?)`, 'i');
+			//pattern = new RegExp(`(^<@!?${this.client.user.id}>\\s+)((\\S+)(?:\\s+\\S+)?)`, 'i');
+			pattern = new RegExp(`(^<@!?${this.client.user.id}>\\s+)(((\\S+)(?:\\s+\\S+))(?:\\s+\\S+)?)`, 'i');
 		}
 		this._commandPatterns[prefix] = pattern;
 		this.client.emit('debug', `Built command pattern for prefix "${prefix}": ${pattern}`);
