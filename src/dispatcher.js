@@ -258,11 +258,11 @@ class CommandDispatcher {
 		if(!this._commandPatterns[prefix]) this.buildCommandPattern(prefix);
 		// Look for 3-word commands
 		let cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 2);
-		if(cmdMsg == null && !cmdMsg.command) {
+		if(cmdMsg == null) {
 			// Look for 2-word commands
 			cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 3);
 		}
-		if(cmdMsg == null && !cmdMsg.command) {
+		if(cmdMsg == null) {
 			// Look for 1-word commands
 			cmdMsg = this.matchDefault(message, this._commandPatterns[prefix], 4);
 		}
